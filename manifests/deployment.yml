@@ -1,0 +1,16 @@
+apiVersion : apps/v1beta1
+kind: Deployment
+metadata:
+  name: "scaks01"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "scaks01"
+    spec:
+      containers:
+        - name: "scaks01"
+          image: "scaksacr01.azurecr.io/scaks01"
+          ports:
+          - containerPort: 80
