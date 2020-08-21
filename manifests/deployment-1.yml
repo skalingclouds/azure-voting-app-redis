@@ -1,0 +1,16 @@
+apiVersion : apps/v1beta1
+kind: Deployment
+metadata:
+  name: "faaksdemo001-9e43"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "faaksdemo001-9e43"
+    spec:
+      containers:
+        - name: "faaksdemo001-9e43"
+          image: "fademoaksacr001.azurecr.io/faaksdemo001"
+          ports:
+          - containerPort: 80
