@@ -1,0 +1,50 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: fademoaksacr001.azurecr.io
+        username: ${{ secrets.acr_fademoaksacr001_username }}
+        password: ${{ secrets.acr_fademoaksacr001_password }}
+    
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/azure-vote" -f  "azure-vote/Dockerfile" -t fademoaksacr001.azurecr.io/faaksdemo001:${{ github.sha }}
+        docker push fademoaksacr001.azurecr.io/faaksdemo001:${{ github.sha }}
+    
+    - uses: azure/k8s-set-context@v1
+      with:
+         kubeconfig: ${{ secrets.aks_faaksdemo001_kubeConfig }}
+      id: login
+    
+    - name: Create namespace
+      run: |
+        namespacePresent=`kubectl get namespace | grep faaksdemo001f8ac | wc -l`
+        if [ $namespacePresent -eq 0 ]
+        then
+            echo `kubectl create namespace faaksdemo001f8ac`
+        fi
+
+    - uses: azure/k8s-create-secret@v1
+      with:
+        namespace: faaksdemo001f8ac
+        container-registry-url: fademoaksacr001.azurecr.io
+        container-registry-username: ${{ secrets.acr_fademoaksacr001_username }}
+        container-registry-password: ${{ secrets.acr_fademoaksacr001_password }}
+        secret-name: faaksdemo001dockerauth
+       
+    - uses: azure/k8s-deploy@v1
+      with:
+        namespace: faaksdemo001f8ac
+        manifests: |
+          manifests/deployment-1.yml
+          manifests/service-1.yml
+        images: |
+          fademoaksacr001.azurecr.io/faaksdemo001:${{ github.sha }}
+        imagepullsecrets: |
+          faaksdemo001dockerauth
